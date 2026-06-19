@@ -21,7 +21,11 @@ def make_filter_config(
     lower,
     upper,
 ):
-    raise NotImplementedError
+    return {
+        "color_space": color_space,
+        "lower": lower,
+        "upper": upper
+    }
 
 
 # 문제 2.
@@ -34,8 +38,14 @@ def make_filter_config(
 #
 # (color_space, lower, upper)
 def load_filter_config(json_text):
-    raise NotImplementedError
 
+    config_dict = json.loads(json_text)
+    
+    return (
+        config_dict["color_space"],
+        config_dict["lower"],
+        config_dict["upper"]
+    )
 
 # 문제 3.
 #
@@ -49,8 +59,17 @@ def load_filter_config(json_text):
 #
 # 객체가 없으면 None을 반환하세요.
 def find_bounding_box(mask):
-    raise NotImplementedError
 
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    if not contours:
+        return None
+        
+    largest_contour = max(contours, key=cv2.contourArea)
+    
+    x, y, w, h = cv2.boundingRect(largest_contour)
+    
+    return (x, y, w, h)
 
 # 문제 4.
 #
@@ -72,7 +91,24 @@ def decide_tracking_command(
     image_width,
     object_area,
 ):
-    raise NotImplementedError
+    center_line = image_width / 2.0
+    
+    deadzone = image_width * 0.1
+
+    TARGET_AREA = 5000
+    
+    if center_x < (center_line - deadzone):
+        return "turn_left"
+        
+    elif center_x > (center_line + deadzone):
+        return "turn_right"
+        
+    else:
+        if object_area < TARGET_AREA:
+            return "forward"
+
+        else:
+            return "stop"
 
 
 # 문제 5.
@@ -83,4 +119,24 @@ def decide_tracking_command(
 #
 # (linear_x, angular_z)
 def command_to_twist(command):
-    raise NotImplementedError
+    
+    linear_x = 0.0
+    angular_z = 0.0
+    
+    if command == "turn_left":
+        linear_x = 0.0
+        angular_z = 0.5
+        
+    elif command == "turn_right":
+        linear_x = 0.0
+        angular_z = -0.5
+        
+    elif command == "forward":
+        linear_x = 0.2 
+        angular_z = 0.0
+        
+    elif command == "stop":
+        linear_x = 0.0
+        angular_z = 0.0
+
+    return (linear_x, angular_z)
